@@ -1,0 +1,6 @@
+streamlit
+scikit-learn
+fpdf
+pillow
+numpy
+scipy
