@@ -130,7 +130,6 @@ def generate_ticket(history):
 
     return pdf.output(dest="S").encode("latin-1", "ignore")
 
-
 # ============================
 #      AVATARS
 # ============================
@@ -173,9 +172,6 @@ with tab1:
                 st.markdown("<div class='result-text'>Toxic</div>", unsafe_allow_html=True)
                 st.write("(Note: This result is based on dataset patterns and may not reflect actual intention.)")
 
-                # ===========================
-                #   AUTO DOWNLOAD TICKET FIX
-                # ===========================
                 if st.session_state.toxic_count >= 3:
                     st.warning("3 Toxic Messages Detected — Issuing Warning Ticket...")
 
@@ -206,30 +202,45 @@ with tab1:
                 st.markdown("<div class='result-text'>Safe Message</div>", unsafe_allow_html=True)
                 st.write("(Based on dataset patterns, no harmful language detected.)")
 
-
 # =======================================================
-#      TAB 2 – TOXIC WORD DICTIONARY
+#      TAB 2 – TOXIC WORD DICTIONARY (NOW ML + RULE-BASED)
 # =======================================================
 with tab2:
     st.markdown("<div class='title-text'>Toxic Word Dictionary</div>", unsafe_allow_html=True)
 
     sentence = st.text_input("Enter a sentence:", "")
-    st.markdown("<div class='info-note'>(Detection may not be 100% accurate)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='info-note'>(ML detection + polite rewrite)</div>", unsafe_allow_html=True)
 
-    if st.button("Rewrite Politely"):
-        cleaned = clean_sentence(sentence)
-        st.success(f"Polite Version: {cleaned}")
+    if st.button("Rewrite Politely") and sentence.strip() != "":
+        vector = vectorizer.transform([sentence])
+        pred = model.predict(vector)[0]
 
+        if pred == 1:
+            polite_version = clean_sentence(sentence)
+            st.error("This sentence was flagged toxic by the ML model.")
+            st.success(f"Polite Rewrite: {polite_version}")
+            st.write("(Note: Rewrite is based on dataset patterns + dictionary.)")
+        else:
+            st.success("This sentence is safe according to the ML model.")
+            st.info("No rewrite needed.")
 
 # =======================================================
-#            TAB 3 – TOXIC PONG
+#            TAB 3 – TOXIC PONG (NOW ML + RULE-BASED)
 # =======================================================
 with tab3:
     st.markdown("<div class='title-text'>Toxic Pong</div>", unsafe_allow_html=True)
 
     pong_sentence = st.text_input("Enter a sentence to clean:", "")
-    st.markdown("<div class='info-note'>(Detection may not be 100% accurate)</div>", unsafe_allow_html=True)
+    st.markdown("<div class='info-note'>(ML detection + toxic-word removal)</div>", unsafe_allow_html=True)
 
-    if st.button("Start Cleaning"):
-        cleaned = remove_toxic_words(pong_sentence)
-        st.success(f"Cleaned Sentence: {cleaned}")
+    if st.button("Start Cleaning") and pong_sentence.strip() != "":
+        vector = vectorizer.transform([pong_sentence])
+        pred = model.predict(vector)[0]
+
+        if pred == 1:
+            cleaned = remove_toxic_words(pong_sentence)
+            st.error("Toxic sentence detected by ML model.")
+            st.success(f"Cleaned Sentence: {cleaned}")
+        else:
+            st.success("Sentence is already clean (ML model).")
+            st.info("No cleaning needed.")
